@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 
-export default function BillversLeadForm() {
+export default function BillversLeadForm({whatsapp="917082688288"}:{whatsapp?:string}) {
   const [prepared, setPrepared] = useState(false);
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -14,7 +14,7 @@ export default function BillversLeadForm() {
       `I’d like help with ${String(data.get("need") ?? "a digital project")}.`,
       String(data.get("note") ?? "").trim(),
     ].filter(Boolean);
-    window.open(`https://wa.me/917082688288?text=${encodeURIComponent(lines.join("\n"))}`, "_blank", "noopener,noreferrer");
+    window.open(`https://wa.me/${whatsapp}?text=${encodeURIComponent(lines.join("\n"))}`, "_blank", "noopener,noreferrer");
     setPrepared(true);
   }
 

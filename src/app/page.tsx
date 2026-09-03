@@ -1,8 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import BillversLeadForm from "./billvers-lead-form";
-import { serviceGroups } from "./service-data";
-import { getServices } from "@/lib/content-store";
+import { getServices,getSiteSettings } from "@/lib/content-store";
+import { BillversFooter, BillversHeader } from "./site-chrome";
 
 const featured = ["website-design", "website-development", "seo", "custom-web-applications", "ecommerce-websites", "web-hosting"];
 
@@ -10,27 +9,18 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const allServices = await getServices();
-  const knownCategories = new Set<string>(serviceGroups.map((group) => group.title));
-  const groups = [
-    ...serviceGroups.map((group) => ({ ...group, services: allServices.filter((service) => service.category === group.title) })),
-    ...Array.from(new Set(allServices.filter((service) => !knownCategories.has(service.category)).map((service) => service.category))).map((category, index) => ({ number: String(serviceGroups.length + index + 1).padStart(2,"0"), title: category, description: "Additional specialist services configured for your business.", services: allServices.filter((service) => service.category === category) })),
-  ].filter((group) => group.services.length);
+  const settings = await getSiteSettings();
   const featuredServices = featured.map((slug) => allServices.find((service) => service.slug === slug)).filter((service) => service !== undefined);
   return (
     <main className="bh-site">
-      <header className="bh-header" id="top">
-        <Link className="mw-brand" href="/" aria-label="BillversTech home"><Image className="mw-logo" src="/logo-mark.svg" alt="" width={34} height={34} priority /><span>BillversTech</span></Link>
-        <nav className="bh-nav" aria-label="Primary navigation"><a href="#services">Services</a><a href="#process">How we work</a><a href="#about">Why us</a><a href="#contact">Contact</a></nav>
-        <details className="bh-mobile-menu"><summary aria-label="Open navigation">Menu <span>＋</span></summary><nav><a href="#services">Services</a><a href="#process">How we work</a><a href="#about">Why us</a><a href="#contact">Contact</a></nav></details>
-        <a className="bh-header-cta" href="#contact">Request a quote <span>↗</span></a>
-      </header>
+      <BillversHeader services={allServices}/>
 
       <section className="bh-hero">
         <div className="bh-hero-copy bh-reveal">
           <span className="bh-kicker">WEB • MOBILE • MARKETING • HOSTING</span>
           <h1>Your business deserves a website that <em>works.</em></h1>
           <p>We design, develop and grow digital experiences that help businesses look credible, reach the right people and turn attention into enquiries.</p>
-          <div className="bh-actions"><a className="bh-button bh-button-dark" href="#contact">Discuss your project <span>↗</span></a><a className="bh-text-link" href="#services">Explore all services <span>↓</span></a></div>
+          <div className="bh-actions"><Link className="bh-button bh-button-dark" href="/contact">Discuss your project <span>↗</span></Link><Link className="bh-text-link" href="/services">Explore all services <span>↗</span></Link></div>
           <div className="bh-proof"><span>Custom, not templated</span><span>Responsive by default</span><span>Support after launch</span></div>
         </div>
         <div className="bh-hero-art bh-reveal" aria-label="BillversTech digital services">
@@ -41,18 +31,7 @@ export default async function Home() {
 
       <div className="bh-ticker"><div>Website Design <b>✦</b> Web Development <b>✦</b> SEO & Marketing <b>✦</b> Custom Applications <b>✦</b> Domains & Hosting <b>✦</b> Website Design <b>✦</b></div></div>
 
-      <section className="bh-section" id="services">
-        <div className="bh-heading"><span>01 / EVERYTHING YOUR BUSINESS NEEDS ONLINE</span><h2>One partner.<br /><i>Every digital need.</i></h2><p>Choose one focused service or bring the whole journey together—from the first brand idea to launch, visibility and ongoing care.</p></div>
-        <div className="bh-category-list">
-          {groups.map((group) => (
-            <article className="bh-category" key={group.title}>
-              <span className="bh-category-number">{group.number}</span>
-              <div><h3>{group.title}</h3><p>{group.description}</p></div>
-              <div className="bh-service-links">{group.services.map((service) => <Link href={`/services/${service.slug}`} key={service.slug}>{service.title}<span>↗</span></Link>)}</div>
-            </article>
-          ))}
-        </div>
-      </section>
+      <section className="bh-section bh-home-services" id="services"><div className="bh-heading"><span>01 / CHOOSE YOUR STARTING POINT</span><h2>Turn a business need into a clear <i>next step.</i></h2><p>Pick the outcome closest to where you are now. We&apos;ll connect it to the right service and a transparent starting price.</p></div><div className="bh-start-grid"><Link href="/services#design-development"><span>01 / LAUNCH OR REDESIGN</span><h3>Build a credible digital home.</h3><p>Brand, website and conversion-focused development for a confident first impression.</p><b>Explore web services ↗</b></Link><Link href="/services#internet-marketing"><span>02 / FIND MORE CUSTOMERS</span><h3>Grow useful attention.</h3><p>Search, paid and social campaigns connected to measurable business goals.</p><b>Explore growth services ↗</b></Link><Link href="/services#application-development"><span>03 / IMPROVE A PROCESS</span><h3>Turn manual work into a system.</h3><p>Custom applications, commerce and management tools shaped around real workflows.</p><b>Explore application services ↗</b></Link></div><Link className="bh-button bh-button-dark" href="/services">Compare every service <span>↗</span></Link></section>
 
       <section className="bh-dark-section">
         <div className="bh-section">
@@ -68,10 +47,9 @@ export default async function Home() {
 
       <section className="bh-about" id="about"><div className="bh-section bh-about-grid"><div className="bh-heading"><span>04 / WHY BILLVERSTECH</span><h2>Good digital work should create <i>confidence.</i></h2></div><div className="bh-reasons"><p><span>A</span><strong>Built around your business</strong>Every design and feature has a reason connected to your customer.</p><p><span>B</span><strong>One accountable team</strong>Strategy, design, development and launch stay connected.</p><p><span>C</span><strong>Ready for what comes next</strong>Scalable foundations make future content, services and payments easier.</p><p><span>D</span><strong>Ownership stays clear</strong>Your domain, accounts, website and business data remain yours.</p></div></div></section>
 
-      <section className="bh-contact" id="contact"><div className="bh-section bh-contact-grid"><div className="bh-heading"><span>05 / LET&apos;S BUILD SOMETHING USEFUL</span><h2>Tell us what you want to <i>make possible.</i></h2><p>A rough idea is enough. We&apos;ll help turn it into the right service, a clear scope and a practical next step.</p><div className="bh-direct"><a href="tel:+917082688288"><small>CALL / WHATSAPP</small><strong>+91 70826 88288</strong></a><a href="mailto:support@billverstech.com"><small>EMAIL</small><strong>support@billverstech.com</strong></a></div></div><BillversLeadForm /></div></section>
+      <section className="bh-contact" id="contact"><div className="bh-section bh-contact-grid"><div className="bh-heading"><span>05 / LET&apos;S BUILD SOMETHING USEFUL</span><h2>Tell us what you want to <i>make possible.</i></h2><p>A rough idea is enough. We&apos;ll help turn it into the right service, a clear scope and a practical next step.</p><div className="bh-direct"><a href={`tel:${settings.phone.replace(/\s/g,"")}`}><small>CALL / WHATSAPP</small><strong>{settings.phone}</strong></a><a href={`mailto:${settings.email}`}><small>EMAIL</small><strong>{settings.email}</strong></a></div></div><BillversLeadForm whatsapp={settings.whatsapp}/></div></section>
 
-      <footer className="bh-footer"><div><Link className="mw-brand" href="#top"><Image className="mw-logo" src="/logo-mark.svg" alt="" width={34} height={34} /><span>BillversTech</span></Link><p>Design, development and digital growth for ambitious businesses.</p></div><div><strong>Explore</strong><a href="#services">All services</a><a href="#process">How we work</a><a href="#contact">Request a quote</a></div><div><strong>Legal</strong><Link href="/privacy">Privacy policy</Link><Link href="/terms">Terms & conditions</Link></div><small>© 2026 BillversTech · billverstech.com</small></footer>
-      <a className="bh-whatsapp" href="https://wa.me/917082688288?text=Hello%20BillversTech%2C%20I%27d%20like%20to%20discuss%20a%20digital%20project." target="_blank" rel="noopener noreferrer">WhatsApp us <span>↗</span></a>
+      <BillversFooter/>
     </main>
   );
 }

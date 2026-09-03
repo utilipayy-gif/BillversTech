@@ -6,7 +6,28 @@ export type Service = {
   intro: string;
   benefits: string[];
   deliverables: string[];
+  price?: number;
 };
+
+const startingPrices: Record<string, number> = {
+  "website-design": 14999, "website-development": 24999, "responsive-websites": 17999,
+  "logo-design": 7999, "website-redesign": 19999, "website-maintenance": 4999,
+  "corporate-websites": 34999, "blog-websites": 17999, seo: 9999,
+  "ppc-management": 9999, "social-media": 11999, "email-marketing": 8999,
+  "custom-web-applications": 49999, "content-management-systems": 29999,
+  "school-management-systems": 79999, "mobile-applications": 69999,
+  "ecommerce-websites": 39999, "motion-presentations": 14999,
+  "interactive-web-experiences": 29999, "digital-advertising-creative": 9999,
+  "domain-registration": 1499, "web-hosting": 4999, "ssl-certificates": 1999,
+};
+
+export function servicePrice(service: Service) {
+  return service.price ?? startingPrices[service.slug] ?? 14999;
+}
+
+export function formatPrice(service: Service) {
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(servicePrice(service));
+}
 
 export const serviceGroups = [
   {
