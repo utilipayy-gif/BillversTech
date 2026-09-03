@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { serviceGroups, type Service } from "./service-data";
 import { getSiteSettings } from "@/lib/content-store";
+import MobileNav from "./mobile-nav";
 
 export function categoryId(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -26,9 +27,9 @@ export function BillversHeader({ services }: { services: Service[] }) {
     <Link className="mw-brand" href="/" aria-label="BillversTech home"><Image className="mw-logo" src="/logo-mark.svg" alt="" width={34} height={34} priority /><span>BillversTech</span></Link>
     <nav className="bh-nav" aria-label="Primary navigation">
       <div className="bh-services-menu"><Link href="/services">Services <span className="bh-menu-toggle" aria-hidden="true">+</span></Link><div className="bh-services-dropdown">{groups.map((group) => <section key={group.title}><Link className="bh-dropdown-category" href={`/services#${categoryId(group.title)}`}>{group.title}</Link>{group.services.map((service) => <Link href={`/services/${service.slug}`} key={service.slug}>{service.title}</Link>)}</section>)}</div></div>
-      <Link href="/about">About us</Link><Link href="/contact">Contact</Link><Link href="/checkout">Order services</Link>
+      <Link href="/about">About us</Link><Link href="/contact">Contact</Link><Link className="bh-order-link" href="/checkout">Order services <span aria-hidden="true">↗</span></Link>
     </nav>
-    <details className="bh-mobile-menu"><summary aria-label="Open navigation">Menu <span>＋</span></summary><nav><Link href="/">Home</Link><details><summary>Services <span>＋</span></summary><div>{groups.map((group) => <section key={group.title}><Link className="bh-dropdown-category" href={`/services#${categoryId(group.title)}`}>{group.title}</Link>{group.services.map((service) => <Link href={`/services/${service.slug}`} key={service.slug}>{service.title}</Link>)}</section>)}</div></details><Link href="/about">About us</Link><Link href="/contact">Contact</Link><Link href="/checkout">Order services</Link></nav></details>
+    <MobileNav groups={groups}/>
     <Link className="bh-header-cta" href="/checkout">Choose a package <span>↗</span></Link>
   </header>;
 }
