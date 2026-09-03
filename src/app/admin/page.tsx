@@ -4,6 +4,7 @@ import Link from "next/link";
 import { changePasswordAction, createServiceAction, deleteServiceAction, loginAction, logoutAction, updateServiceAction, updateSettingsAction } from "./actions";
 import styles from "./admin.module.css";
 import { servicePrice } from "../service-data";
+import PackageEditor from "./package-editor";
 
 const message:Record<string,string>={created:"Service created.",saved:"Changes published.",settings:"Contact and company details published.",deleted:"Service removed.",password:"Password changed. Sign in with your new password.",login:"Email or password is incorrect.",session:"Please sign in again.",duplicate:"That URL slug is already in use.",confirm:"Removal text did not match.",storage:"Neon is not configured yet. Add DATABASE_URL before publishing changes.",password_current:"Current password is incorrect.",password_match:"New passwords do not match.",password_same:"Choose a password different from the current one.",password_length:"New password must be between 12 and 128 characters."};
 const Fields=({service}:{service?:Awaited<ReturnType<typeof getServices>>[number]})=><>
@@ -12,6 +13,7 @@ const Fields=({service}:{service?:Awaited<ReturnType<typeof getServices>>[number
   <label>Short description<textarea name="short" rows={2} defaultValue={service?.short} required/></label>
   <label>Detailed introduction<textarea name="intro" rows={5} defaultValue={service?.intro} required/></label>
   <div className={styles.pair}><label>Benefits — one per line<textarea name="benefits" rows={5} defaultValue={service?.benefits.join("\n")} required/></label><label>Deliverables — one per line<textarea name="deliverables" rows={5} defaultValue={service?.deliverables.join("\n")} required/></label></div>
+  <PackageEditor initial={service?.packages}/>
 </>;
 
 export default async function AdminPage({searchParams}:PageProps<"/admin">){

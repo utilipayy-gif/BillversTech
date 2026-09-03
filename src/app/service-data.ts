@@ -1,3 +1,5 @@
+export type ServicePackage = { id:string; name:string; heading:string; description:string; price:number; features:string[] };
+
 export type Service = {
   slug: string;
   title: string;
@@ -7,7 +9,14 @@ export type Service = {
   benefits: string[];
   deliverables: string[];
   price?: number;
+  packages?: ServicePackage[];
 };
+
+export const logoPackages:ServicePackage[]=[
+  {id:"starter-logo",name:"Starter Logo",heading:"For new businesses that need a clean, professional starting point",description:"A focused logo package for founders launching a small business, local service or personal brand.",price:4999,features:["2 original logo concepts","2 revision rounds","Colour and monochrome versions","PNG, JPG and SVG files"]},
+  {id:"professional-logo",name:"Professional Logo",heading:"For growing brands that need more choice and flexibility",description:"A broader creative process with practical variants for websites, social profiles and business material.",price:9999,features:["4 original logo concepts","4 revision rounds","Primary and secondary logo variants","Complete web and print file set"]},
+  {id:"brand-identity",name:"Logo & Brand Identity",heading:"For businesses building a complete and consistent visual identity",description:"A complete identity foundation that keeps the brand recognisable across every customer touchpoint.",price:17999,features:["5 logo concepts and refinements","Logo suite and brand mark","Colour and typography system","Mini brand-guideline document"]},
+];
 
 const startingPrices: Record<string, number> = {
   "website-design": 14999, "website-development": 24999, "responsive-websites": 17999,
@@ -22,7 +31,7 @@ const startingPrices: Record<string, number> = {
 };
 
 export function servicePrice(service: Service) {
-  return service.price ?? startingPrices[service.slug] ?? 14999;
+  return service.packages?.length ? Math.min(...service.packages.map(item=>item.price)) : service.price ?? startingPrices[service.slug] ?? 14999;
 }
 
 export function formatPrice(service: Service) {
@@ -66,7 +75,7 @@ export const services: Service[] = [
   { slug:"website-design", title:"Website Design", category:"Design & Development", short:"Custom visual design that makes your business clear, credible and memorable.", intro:"Your website often makes the first impression before you ever speak to a customer. We create a tailored visual direction and page structure that reflects your business, guides attention and makes the next step obvious.", benefits:["A professional presence built around your brand", "Clear journeys for customers on every screen", "Original layouts instead of recycled templates"], deliverables:["Discovery and page planning", "Custom UI design", "Mobile and desktop layouts", "Enquiry-focused calls to action"] },
   { slug:"website-development", title:"Website Development", category:"Design & Development", short:"Fast, secure websites engineered to perform reliably across modern devices.", intro:"Good design only works when the build is solid. We turn approved ideas into responsive, maintainable websites with clean foundations, quick loading and the integrations your business needs.", benefits:["Reliable performance and clean code", "A foundation that can grow with the business", "Smooth forms, WhatsApp and enquiry flows"], deliverables:["Front-end development", "CMS or custom integrations", "Performance optimisation", "Launch and quality checks"] },
   { slug:"responsive-websites", title:"Responsive Website Design", category:"Design & Development", short:"One consistent experience across mobiles, tablets, laptops and large screens.", intro:"Most customers will meet your business on a phone. We plan responsive behaviour from the beginning so content stays readable, navigation stays simple and important actions remain easy to reach.", benefits:["Mobile-first customer journeys", "Consistent brand presentation", "Better usability across screen sizes"], deliverables:["Responsive layouts", "Touch-friendly navigation", "Cross-device testing", "Image and type optimisation"] },
-  { slug:"logo-design", title:"Logo & Visual Identity", category:"Design & Development", short:"A recognisable identity with the practical assets needed to use it consistently.", intro:"We create focused logo and identity systems that suit the business, work at small and large sizes, and give future website and marketing material a consistent visual foundation.", benefits:["A distinctive, usable brand mark", "Consistent colours and typography", "Assets prepared for digital use"], deliverables:["Logo concepts", "Colour and type direction", "Primary file formats", "Simple usage guidance"] },
+  { slug:"logo-design", title:"Logo & Visual Identity", category:"Design & Development", short:"A recognisable identity with the practical assets needed to use it consistently.", intro:"We create focused logo and identity systems that suit the business, work at small and large sizes, and give future website and marketing material a consistent visual foundation.", benefits:["A distinctive, usable brand mark", "Consistent colours and typography", "Assets prepared for digital use"], deliverables:["Logo concepts", "Colour and type direction", "Primary file formats", "Simple usage guidance"], packages:logoPackages },
   { slug:"website-redesign", title:"Website Redesign", category:"Design & Development", short:"A clearer, faster and more current website without losing what already works.", intro:"When an existing website feels dated or difficult to use, we audit its content and journeys, retain valuable material and rebuild the experience around today’s customers and devices.", benefits:["Clearer content hierarchy", "A modern, credible presentation", "Improved speed and mobile usability"], deliverables:["Current-site audit", "Content restructuring", "New responsive design", "Migration and launch support"] },
   { slug:"website-maintenance", title:"Website Maintenance", category:"Design & Development", short:"Ongoing updates, monitoring and fixes that keep your site useful and dependable.", intro:"Websites need regular care. We handle planned content updates, technical checks, backups and small improvements so the public experience stays current and secure.", benefits:["Fewer unexpected issues", "Fresh, accurate content", "A reliable point of support"], deliverables:["Routine updates", "Backup checks", "Performance monitoring", "Priority issue support"] },
   { slug:"corporate-websites", title:"Corporate Website Design", category:"Design & Development", short:"Structured company websites that communicate capability, trust and scale.", intro:"We organise complex company information into a confident digital presence for customers, partners, recruits and stakeholders—without burying the important message under corporate clutter.", benefits:["Clear capability communication", "Stronger trust and credibility", "Flexible structure for multiple audiences"], deliverables:["Information architecture", "Service and company pages", "Proof and enquiry journeys", "CMS-ready build"] },

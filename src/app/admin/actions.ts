@@ -9,9 +9,10 @@ import type { Service } from "../service-data";
 function value(data: FormData, key: string) { return String(data.get(key) ?? "").trim(); }
 function lines(data: FormData, key: string) { return value(data,key).split("\n").map((item)=>item.trim()).filter(Boolean).slice(0,12); }
 function normaliseSlug(input: string) { return input.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""); }
+function packagesFromForm(data:FormData){const ids=data.getAll("packageId"),names=data.getAll("packageName"),headings=data.getAll("packageHeading"),descriptions=data.getAll("packageDescription"),prices=data.getAll("packagePrice"),features=data.getAll("packageFeatures");return names.map((entry,index)=>({id:normaliseSlug(String(ids[index]??entry))||`package-${index+1}`,name:String(entry).trim(),heading:String(headings[index]??"").trim(),description:String(descriptions[index]??"").trim(),price:Number(prices[index]??0),features:String(features[index]??"").split("\n").map(item=>item.trim()).filter(Boolean).slice(0,16)}))}
 function fromForm(data: FormData): Service {
-  const service = { slug:normaliseSlug(value(data,"slug")), title:value(data,"title"), category:value(data,"category"), short:value(data,"short"), intro:value(data,"intro"), benefits:lines(data,"benefits"), deliverables:lines(data,"deliverables"), price:Number(value(data,"price")) };
-  if (!service.slug || !service.title || !service.category || service.short.length < 10 || service.intro.length < 20 || !service.benefits.length || !service.deliverables.length || !Number.isFinite(service.price) || service.price < 0) throw new Error("Please complete every field with useful content.");
+  const service = { slug:normaliseSlug(value(data,"slug")), title:value(data,"title"), category:value(data,"category"), short:value(data,"short"), intro:value(data,"intro"), benefits:lines(data,"benefits"), deliverables:lines(data,"deliverables"), price:Number(value(data,"price")),packages:packagesFromForm(data) };
+  if (!service.slug || !service.title || !service.category || service.short.length < 10 || service.intro.length < 20 || !service.benefits.length || !service.deliverables.length || !Number.isFinite(service.price) || service.price < 0 || service.packages.some(item=>!item.name||!item.heading||item.description.length<10||!Number.isFinite(item.price)||item.price<0||!item.features.length)) throw new Error("Please complete every field with useful content.");
   return service;
 }
 
