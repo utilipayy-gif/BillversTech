@@ -21,7 +21,7 @@ export default function BillversLeadForm({whatsapp="917082688288"}:{whatsapp?:st
   return (
     <form className="mw-form" onSubmit={submit}>
       <div className="mw-field-pair">
-        <label><span>01</span>Your name<input name="name" required autoComplete="name" /></label>
+        <label><span>01</span>Your name<input name="name" minLength={2} required autoComplete="name" /></label>
         <label><span>02</span>Business name<input name="business" autoComplete="organization" /></label>
       </div>
       <label><span>03</span>What would you like to build?
