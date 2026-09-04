@@ -30,7 +30,7 @@ export function BillversHeader({ services }: { services: Service[] }) {
       <Link href="/about">About us</Link><Link href="/contact">Contact</Link><Link className="bh-order-link" href="/checkout">Order services <span aria-hidden="true">↗</span></Link>
     </nav>
     <MobileNav groups={groups}/>
-    <Link className="bh-header-cta" href="/checkout">Choose a package <span>↗</span></Link>
+    <Link className="bh-header-cta" href="/checkout">Start an order <span>↗</span></Link>
   </header>;
 }
 
