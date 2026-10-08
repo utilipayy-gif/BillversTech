@@ -126,6 +126,12 @@ export function prepareAirpayTransaction(params: AirpayPaymentParams) {
     { name: "checksum", value: checksum },
   ];
 
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.billverstech.com").replace(/\/$/, "");
+  const returnUrl = `${siteUrl}/api/payment/airpay/response`;
+  fields.push({ name: "successurl", value: returnUrl });
+  fields.push({ name: "failedurl", value: returnUrl });
+  fields.push({ name: "returnurl", value: returnUrl });
+
   if (params.customVar) {
     fields.push({ name: "customvar", value: params.customVar });
   }
