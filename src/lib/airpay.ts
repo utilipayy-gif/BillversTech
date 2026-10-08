@@ -120,9 +120,17 @@ export function prepareAirpayTransaction(params: AirpayPaymentParams) {
     { name: "isocurrency", value: "INR" },
     { name: "chmod", value: "" }, // Allows all channels (UPI, Cards, NetBanking, Wallets)
     { name: "merchant_id", value: config.merchantId },
+    { name: "mercid", value: config.merchantId },
+    { name: "mid", value: config.merchantId },
     { name: "privatekey", value: privateKey },
     { name: "checksum", value: checksum },
   ];
+
+  const clientId = process.env.AIRPAY_CLIENT_ID?.trim() || "zJQsJ3";
+  fields.push(
+    { name: "client_id", value: clientId },
+    { name: "clientid", value: clientId },
+  );
 
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.billverstech.com").replace(/\/$/, "");
   const returnUrl = `${siteUrl}/api/payment/airpay/response`;
