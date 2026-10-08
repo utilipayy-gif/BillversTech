@@ -96,6 +96,8 @@ export default function CheckoutForm({ services, initialService, initialPackage 
   const [choice, setChoice] = useState(options[0]?.key ?? "");
   const [ready, setReady] = useState(false);
   const [restored, setRestored] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -123,6 +125,7 @@ export default function CheckoutForm({ services, initialService, initialPackage 
   const money = (value: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
   const update = (key: string, amount: number) => {
     setReady(false);
+    setSubmitError("");
     setItems((current) => {
       const next = { ...current, [key]: Math.max(0, (current[key] ?? 0) + amount) };
       if (!next[key]) delete next[key];
@@ -130,9 +133,71 @@ export default function CheckoutForm({ services, initialService, initialPackage 
     });
   };
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setReady(true);
+    setSubmitError("");
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData(event.currentTarget);
+      const name = String(formData.get("name") ?? "").trim();
+      const email = String(formData.get("email") ?? "").trim();
+      const phone = String(formData.get("phone") ?? "").trim();
+      const business = String(formData.get("business") ?? "").trim();
+      const notes = String(formData.get("notes") ?? "").trim();
+
+      const response = await fetch("/api/payment/airpay/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer: { name, email, phone, business, notes },
+          items: selected.map((item) => ({
+            key: item.key,
+            title: item.serviceTitle,
+            packageName: item.packageName,
+            quantity: items[item.key] ?? 1,
+            price: item.price,
+          })),
+          total,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setSubmitError(data.error || "Unable to proceed with payment gateway.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (data.isConfigured && data.endpoint && data.fields) {
+        // Construct and submit the Airpay form
+        const airpayForm = document.createElement("form");
+        airpayForm.method = "POST";
+        airpayForm.action = data.endpoint;
+
+        for (const field of data.fields) {
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = field.name;
+          input.value = field.value;
+          airpayForm.appendChild(input);
+        }
+
+        document.body.appendChild(airpayForm);
+        airpayForm.submit();
+      } else if (data.testRedirectUrl) {
+        // Test/Demo mode fallback
+        window.location.href = data.testRedirectUrl;
+      } else {
+        setReady(true);
+        setIsSubmitting(false);
+      }
+    } catch (err) {
+      console.error(err);
+      setSubmitError("Failed to communicate with payment processor. Please try again.");
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -181,8 +246,23 @@ export default function CheckoutForm({ services, initialService, initialPackage 
           <small>Final scope and applicable taxes are confirmed before payment.</small>
         </div>
         {restored && selected.length > 0 && <p className="order-saved">✓ Your selection is saved on this device.</p>}
-        <button className="bh-button bh-button-dark" disabled={!selected.length}>Proceed to payment <span>→</span></button>
-        {ready && <p className="order-ready" role="status"><strong>Your order is ready.</strong> Secure gateway processing can now be connected to this confirmed package selection.</p>}
+        {submitError && (
+          <p className="field-error" style={{ color: "#cf222e", margin: "8px 0", fontSize: "12px" }}>
+            ✕ {submitError}
+          </p>
+        )}
+        <button
+          className="bh-button bh-button-dark"
+          disabled={!selected.length || isSubmitting}
+          style={{ width: "100%", cursor: isSubmitting ? "wait" : "pointer" }}
+        >
+          {isSubmitting ? "Connecting to Airpay Gateway..." : "Proceed to payment →"}
+        </button>
+        {ready && (
+          <p className="order-ready" role="status">
+            <strong>Order prepared.</strong> Initiating secure checkout with Airpay...
+          </p>
+        )}
       </aside>
 
       {selected.length > 0 && <div className="order-mobile-total" aria-live="polite">
