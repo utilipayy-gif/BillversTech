@@ -44,9 +44,7 @@ export function isAirpayConfigured(): boolean {
 export function getAirpayConfig(): AirpayConfig {
   const mode = process.env.AIRPAY_MODE === "production" ? "production" : "sandbox";
   const endpoint =
-    mode === "production"
-      ? "https://payments.airpay.co.in/pay/index.php"
-      : "https://kraken.airpay.co.in/airpay/pay/index.php";
+    process.env.AIRPAY_ENDPOINT?.trim() || "https://payments.airpay.co.in/pay/index.php";
 
   return {
     merchantId: (process.env.AIRPAY_MERCHANT_ID ?? "").trim(),
