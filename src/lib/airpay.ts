@@ -293,3 +293,153 @@ export function verifyAirpayResponse(data: {
 
   return expectedHash.toLowerCase() === data.checksum.toLowerCase();
 }
+
+/**
+ * Safely decrypts an encrypted Airpay response payload using configured merchant keys.
+ */
+export function safeDecryptAirpayResponse(
+  encryptedStr: string,
+  config?: AirpayConfig
+): Record<string, any> | null {
+  if (!encryptedStr || typeof encryptedStr !== "string" || encryptedStr.length < 17) {
+    return null;
+  }
+
+  const activeConfig = config || getAirpayConfig();
+  const encKey = getAirpayEncryptionKey(activeConfig.username, activeConfig.password);
+  const keysToTry = [encKey, activeConfig.secretKey, activeConfig.apiKey];
+
+  for (const k of keysToTry) {
+    if (!k) continue;
+    try {
+      const ivStr = encryptedStr.substring(0, 16);
+      const encBase64 = encryptedStr.substring(16);
+      const decipher = createDecipheriv("aes-256-cbc", Buffer.from(k, "utf8"), Buffer.from(ivStr, "utf8"));
+      let dec = decipher.update(encBase64, "base64", "utf8");
+      dec += decipher.final("utf8");
+
+      try {
+        const parsed = JSON.parse(dec);
+        if (parsed && typeof parsed === "object") return parsed;
+      } catch {
+        const params = new URLSearchParams(dec);
+        const obj: Record<string, string> = {};
+        params.forEach((v, key) => {
+          obj[key] = v;
+        });
+        if (Object.keys(obj).length > 0) return obj;
+      }
+    } catch {
+      // continue to next candidate key
+    }
+  }
+
+  return null;
+}
+
+export type ParsedAirpayResponse = {
+  transactionId: string;
+  airpayTxnId: string;
+  amount: string;
+  status: string;
+  isSuccess: boolean;
+  message: string;
+  paymentMode: string;
+  transactionDate: string;
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  customVar?: string;
+  raw: Record<string, string>;
+};
+
+/**
+ * Parses, decrypts (if encrypted), and normalizes incoming Airpay callback / response parameters.
+ */
+export function parseAirpayResponsePayload(
+  rawInput: Record<string, any>,
+  config?: AirpayConfig
+): ParsedAirpayResponse {
+  const activeConfig = config || getAirpayConfig();
+  const merged: Record<string, string> = {};
+
+  for (const [key, val] of Object.entries(rawInput)) {
+    if (val !== undefined && val !== null) {
+      merged[key] = String(val);
+    }
+  }
+
+  const encCandidate =
+    merged.encdata ||
+    merged.encData ||
+    merged.ENCDATA ||
+    merged.response ||
+    merged.RESPONSE ||
+    merged.data ||
+    merged.data_value;
+
+  if (encCandidate && typeof encCandidate === "string" && encCandidate.length > 20) {
+    const decrypted = safeDecryptAirpayResponse(encCandidate, activeConfig);
+    if (decrypted) {
+      for (const [k, v] of Object.entries(decrypted)) {
+        if (v !== undefined && v !== null) {
+          merged[k] = String(v);
+        }
+      }
+    }
+  }
+
+  const findVal = (...keys: string[]): string => {
+    for (const k of keys) {
+      if (merged[k] !== undefined && merged[k] !== "") return merged[k];
+      const lower = k.toLowerCase();
+      for (const [mk, mv] of Object.entries(merged)) {
+        if (mk.toLowerCase() === lower && mv !== "") return mv;
+      }
+    }
+    return "";
+  };
+
+  const transactionId = findVal("TRANSACTIONID", "orderid", "orderId", "mer_txn", "ORDERID", "txn_id");
+  const airpayTxnId = findVal("APTRANSACTIONID", "aptransactionid", "airpay_txn_id", "ap_txn_id", "airpaytxnid");
+  const amount = findVal("AMOUNT", "amount", "amt", "billed_amount");
+  const rawStatus = findVal("TRANSACTIONSTATUS", "status", "transactionstatus", "TRANSACTION_STATUS", "STATUS", "response_code");
+  const message = findVal("MESSAGE", "message", "status_desc", "msg", "desc");
+  const paymentMode = findVal("CHMOD", "chmod", "payment_mode", "pay_mode");
+  const transactionDate = findVal("TRANSACTIONDATE", "transactiondate", "date", "datetime") || getIndiaDateString();
+  const customVar = findVal("customvar", "customVar", "CUSTOMVAR");
+
+  const customerName = (
+    findVal("buyerFirstName", "buyer_firstname", "customer_name", "buyerName") +
+    (findVal("buyerLastName", "buyer_lastname") ? " " + findVal("buyerLastName", "buyer_lastname") : "")
+  ).trim();
+  const customerEmail = findVal("buyerEmail", "buyer_email", "email");
+  const customerPhone = findVal("buyerPhone", "buyer_phone", "phone");
+
+  const statusLower = rawStatus.toLowerCase();
+  const msgLower = message.toLowerCase();
+
+  const isSuccess =
+    rawStatus === "200" ||
+    statusLower === "success" ||
+    statusLower === "paid" ||
+    rawStatus === "00" ||
+    msgLower.includes("success") ||
+    msgLower.includes("approved");
+
+  return {
+    transactionId,
+    airpayTxnId,
+    amount,
+    status: rawStatus || (isSuccess ? "200" : "400"),
+    isSuccess,
+    message: message || (isSuccess ? "Payment received successfully" : "Payment incomplete or cancelled"),
+    paymentMode: paymentMode || "Online (UPI / Cards / NetBanking)",
+    transactionDate,
+    customerName: customerName || undefined,
+    customerEmail: customerEmail || undefined,
+    customerPhone: customerPhone || undefined,
+    customVar: customVar || undefined,
+    raw: merged,
+  };
+}
