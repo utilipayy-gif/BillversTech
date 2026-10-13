@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const transaction = prepareAirpayTransaction({
+    const transaction = await prepareAirpayTransaction({
       orderId,
       amount: Number(total),
       customer: {
