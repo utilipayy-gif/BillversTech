@@ -171,6 +171,29 @@ export default function CheckoutForm({ services, initialService, initialPackage 
       }
 
       if (data.isConfigured && data.endpoint && data.fields) {
+        // Save pending order details in client storage for real invoice generation
+        try {
+          const orderSnapshot = {
+            orderId: data.orderId || "",
+            amount: String(total),
+            customerName: name,
+            customerEmail: email,
+            customerPhone: phone,
+            business,
+            notes,
+            items: selected.map((item) => ({
+              title: item.serviceTitle + (item.packageName ? ` — ${item.packageName}` : ""),
+              price: item.price,
+              quantity: items[item.key] ?? 1,
+            })),
+            timestamp: new Date().toISOString(),
+          };
+          sessionStorage.setItem("billverstech_order", JSON.stringify(orderSnapshot));
+          localStorage.setItem("billverstech_order", JSON.stringify(orderSnapshot));
+        } catch (e) {
+          console.warn("Could not save order snapshot:", e);
+        }
+
         // Construct and submit the Airpay form
         const airpayForm = document.createElement("form");
         airpayForm.method = "POST";

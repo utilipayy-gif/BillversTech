@@ -378,14 +378,21 @@ export function parseAirpayResponsePayload(
     merged.data ||
     merged.data_value;
 
+  const flattenIntoMerged = (obj: Record<string, any>) => {
+    for (const [k, v] of Object.entries(obj)) {
+      if (v === null || v === undefined) continue;
+      if (typeof v === "object" && !Array.isArray(v)) {
+        flattenIntoMerged(v);
+      } else {
+        merged[k] = String(v);
+      }
+    }
+  };
+
   if (encCandidate && typeof encCandidate === "string" && encCandidate.length > 20) {
     const decrypted = safeDecryptAirpayResponse(encCandidate, activeConfig);
     if (decrypted) {
-      for (const [k, v] of Object.entries(decrypted)) {
-        if (v !== undefined && v !== null) {
-          merged[k] = String(v);
-        }
-      }
+      flattenIntoMerged(decrypted);
     }
   }
 
@@ -400,14 +407,70 @@ export function parseAirpayResponsePayload(
     return "";
   };
 
-  const transactionId = findVal("TRANSACTIONID", "orderid", "orderId", "mer_txn", "ORDERID", "txn_id");
-  const airpayTxnId = findVal("APTRANSACTIONID", "aptransactionid", "airpay_txn_id", "ap_txn_id", "airpaytxnid");
-  const amount = findVal("AMOUNT", "amount", "amt", "billed_amount");
-  const rawStatus = findVal("TRANSACTIONSTATUS", "status", "transactionstatus", "TRANSACTION_STATUS", "STATUS", "response_code");
+  let transactionId = findVal(
+    "TRANSACTIONID",
+    "orderid",
+    "orderId",
+    "mer_txn",
+    "ORDERID",
+    "txn_id",
+    "order_id",
+    "merchant_txn_id",
+    "transaction_id"
+  );
+
+  const airpayTxnId = findVal(
+    "APTRANSACTIONID",
+    "aptransactionid",
+    "airpay_txn_id",
+    "ap_txn_id",
+    "airpaytxnid",
+    "ap_transaction_id",
+    "bank_ref_no",
+    "bank_txn",
+    "airpay_id"
+  );
+
+  const amount = findVal(
+    "AMOUNT",
+    "amount",
+    "amt",
+    "billed_amount",
+    "paid_amount",
+    "order_amount",
+    "txn_amount",
+    "total_amount",
+    "price",
+    "total",
+    "TXNAMOUNT"
+  );
+
+  const rawStatus = findVal(
+    "TRANSACTIONSTATUS",
+    "status",
+    "transactionstatus",
+    "TRANSACTION_STATUS",
+    "STATUS",
+    "response_code",
+    "status_code"
+  );
+
   const message = findVal("MESSAGE", "message", "status_desc", "msg", "desc");
   const paymentMode = findVal("CHMOD", "chmod", "payment_mode", "pay_mode");
   const transactionDate = findVal("TRANSACTIONDATE", "transactiondate", "date", "datetime") || getIndiaDateString();
   const customVar = findVal("customvar", "customVar", "CUSTOMVAR");
+
+  // If orderId is missing, try to parse it from customvar
+  if (!transactionId && customVar) {
+    try {
+      const parsedCustom = JSON.parse(customVar);
+      if (parsedCustom?.orderId) {
+        transactionId = String(parsedCustom.orderId);
+      }
+    } catch {
+      // ignore
+    }
+  }
 
   const customerName = (
     findVal("buyerFirstName", "buyer_firstname", "customer_name", "buyerName") +
