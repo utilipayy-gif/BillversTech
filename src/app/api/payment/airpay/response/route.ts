@@ -25,10 +25,10 @@ export async function POST(request: Request) {
       checksum,
     });
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || request.url;
     const isSuccess = isValid && (status === "200" || status === "SUCCESS" || status === "success");
 
-    const targetUrl = new URL("/checkout/result", siteUrl || "http://localhost:3001");
+    const targetUrl = new URL("/checkout/result", siteUrl);
     targetUrl.searchParams.set("status", isSuccess ? "success" : "failed");
     targetUrl.searchParams.set("orderId", transactionId);
     targetUrl.searchParams.set("airpayTxnId", airpayTxnId);
@@ -38,8 +38,8 @@ export async function POST(request: Request) {
     return NextResponse.redirect(targetUrl.toString(), 303);
   } catch (error) {
     console.error("Airpay callback processing failed:", error);
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
-    return NextResponse.redirect(new URL("/checkout/result?status=failed&message=Server+callback+error", siteUrl || "http://localhost:3001"), 303);
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || request.url;
+    return NextResponse.redirect(new URL("/checkout/result?status=failed&message=Server+callback+error", siteUrl), 303);
   }
 }
 
@@ -53,10 +53,10 @@ export async function GET(request: Request) {
   const status = searchParams.get("TRANSACTIONSTATUS") || "";
   const message = searchParams.get("MESSAGE") || "";
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || request.url;
   const isSuccess = status === "200" || status === "SUCCESS" || status === "success";
 
-  const targetUrl = new URL("/checkout/result", siteUrl || "http://localhost:3001");
+  const targetUrl = new URL("/checkout/result", siteUrl);
   targetUrl.searchParams.set("status", isSuccess ? "success" : "failed");
   targetUrl.searchParams.set("orderId", transactionId);
   targetUrl.searchParams.set("airpayTxnId", airpayTxnId);
